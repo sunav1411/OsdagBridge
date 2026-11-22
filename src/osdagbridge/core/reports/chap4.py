@@ -144,7 +144,13 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
 \caption{\textbf{Reactions at Supports}}
 \hline
-\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\[6pt]
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
+\hline
+\endhead[6pt]
 \hline
  & """ + '' + r""" & """ + '' + r""" \\[6pt]
 \hline
@@ -159,6 +165,12 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \caption{\textbf{Deflection Summary (Live Load \& Total Load)}}
 \hline
 \textbf{parameter} & \textbf{value} \\
+\hline
+\endfirsthead
+\hline
+\textbf{parameter} & \textbf{value} \\
+\hline
+\endhead
 \hline
 \textnormal{Deflection due to Live Load, $\delta_{LL}$} & """ + _live_str + r""" \\[6pt]
 \hline
