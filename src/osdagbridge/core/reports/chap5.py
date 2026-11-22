@@ -1243,7 +1243,7 @@ This section presents all structural design checks performed by OsdagBridge. For
 \endhead
 """ + t512_content + r"""
 \end{longtable}
-\noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness > 25 mm.}
+\noindent\textit{Note: IRC 22 Cl. 605 --- governing of normal and shear fatigue (worst by DCR). Capacity reduction factor $\mu_r$ applied where plate thickness $>$ 25 mm.}
 
 \vspace{1em}
 \vspace{0.4em}
