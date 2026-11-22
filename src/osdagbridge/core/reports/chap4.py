@@ -149,7 +149,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \endgroup
 
 \vspace{1em}
-\begin{longtable}{|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
+\begin{longtable}{|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|}
 \caption{\textbf{Reactions at Supports}}
 \hline
 \textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
