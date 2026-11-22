@@ -52,7 +52,7 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
     reaction_rows = []
     for _lc, _rxn in rxn_summary.items():
         _rxn = _rxn or {}
-        reaction_rows.append(_tex(_lc) + " & " + _fmt(_rxn.get("left_kN")) + " & " + _fmt(_rxn.get("right_kN")) + r" \\\\[6pt]")
+        reaction_rows.append(_tex(_lc) + " & " + _fmt(_rxn.get("left_kN")) + " & " + _fmt(_rxn.get("right_kN")) + r" \\[6pt]")
     reaction_body = ("\n\\hline\n").join(reaction_rows)
     if not reaction_body:
         reaction_body = r"\multicolumn{3}{|c|}{No support reaction data available} \\"
