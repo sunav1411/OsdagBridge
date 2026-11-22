@@ -24,9 +24,10 @@ Features:
 """
 from osdagbridge.core.utils.common import *
 from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB, Quantity_NOC_BLACK
-from OCC.Core.TopoDS import TopoDS_Shape
+from OCC.Core.TopoDS import TopoDS_Shape, topods
 from OCC.Core.AIS import AIS_Shape
 from OCC.Core.TopAbs import TopAbs_EDGE
+from OCC.Core.TopExp import TopExp_Explorer
 
 # Component builder imports
 from osdagbridge.core.bridge_components.super_structure.plate_girder.builder import (

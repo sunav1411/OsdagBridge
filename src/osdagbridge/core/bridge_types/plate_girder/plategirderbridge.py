@@ -801,9 +801,9 @@ class PlateGirderBridge:
         # Release all heavy analysis memory (unlock / app-close entry point).
         self.memory.release()
 
-    def _export_cad_figures(self, cad_generator) -> dict:
+    def _export_cad_figures(self, cad_generator, figures_dir=None) -> dict:
         """
-        Export 4 CAD views to the fixed internal Images folder.
+        Export 4 CAD views to a temporary or caller-provided Images folder.
         Returns { ReportFigures_attr: absolute_path } for each view.
         Returns {} on any failure. Never raises.
         """
@@ -811,12 +811,10 @@ class PlateGirderBridge:
         import logging
         _log = logging.getLogger(__name__)
 
-        # ── Resolve save path: core/data/ResourceFiles/Images/ ───────
-        resource_files_dir = os.path.normpath(os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            '..', '..', '..', 'core', 'data', 'ResourceFiles'
-        ))
-        figures_dir = os.path.join(resource_files_dir, 'Images')
+        # ── Resolve a safe output folder for report-only images ───────
+        if figures_dir is None:
+            import tempfile
+            figures_dir = os.path.join(tempfile.mkdtemp(prefix="osdag_report_cad_"), "Images")
         if not os.path.exists(figures_dir):
             os.makedirs(figures_dir)
 
@@ -913,7 +911,7 @@ class PlateGirderBridge:
                 off_display.View_Top()
                 off_display.FitAll()
                 off_display.set_bg_gradient_color(
-                    [235, 235, 235], [195, 195, 195])
+                    [90, 100, 120], [50, 60, 80])
                 p = os.path.join(figures_dir, 'girder_top.png')
                 off_display.ExportToImage(p)
                 if os.path.exists(p):
@@ -984,10 +982,44 @@ class PlateGirderBridge:
 
         payload = build_report_payload(request, report_inputs, output_dict)
 
-        # Collect figure bytes into payload.figure_data — no disk writes here
+        # Collect figure bytes into payload.figure_data. The UI passes its CAD
+        # window; headless callers may pass the underlying generator directly.
         figure_data = {}
         if isinstance(cad_generator, dict):
             figure_data.update(cad_generator.get('figure_data', {}))
+        elif cad_generator is not None:
+            import os
+            import tempfile
+
+            cad_core = getattr(cad_generator, 'generator', cad_generator)
+            with tempfile.TemporaryDirectory(prefix="osdag_report_cad_") as cad_tmp:
+                paths = self._export_cad_figures(
+                    cad_core, figures_dir=os.path.join(cad_tmp, "Images"))
+                for name, path in paths.items():
+                    try:
+                        with open(path, 'rb') as stream:
+                            figure_data[name] = stream.read()
+                    except OSError as exc:
+                        _log.warning("Could not read generated CAD view %s: %s", name, exc)
+
+        from osdagbridge.core.reports.report_drawings import build_section_figures
+        try:
+            figure_data.update(build_section_figures(
+                report_inputs, self.get_3d_cad_parameters()))
+        except Exception as exc:
+            _log.warning("Could not build section-profile report illustrations: %s", exc)
+
+        # Supply the available CAD views to the corresponding report slots.
+        # The end view also serves as the bridge cross-section and bracing
+        # layout, while the front view supplies the girder side elevation.
+        for source, targets in (
+            ('girder_3d', ('final_geometry',)),
+            ('girder_end', ('cross_section', 'cb_diagram', 'ed_diagram')),
+            ('girder_front', ('stiffener_preview',)),
+        ):
+            if figure_data.get(source):
+                for target in targets:
+                    figure_data.setdefault(target, figure_data[source])
 
         payload.figure_data = figure_data  # handed off; generate_report clears it after writing
 
