@@ -145,7 +145,7 @@ from osdagbridge.core.reports.report_utils import _tex, _render_value, get_girde
 
 if TYPE_CHECKING:
     pass
-def ch5_design_checks(checks_data, bridge) -> str:
+def ch5_design_checks(checks_data, bridge, chart_paths=None) -> str:
     """Chapter 5 — Design Checks.
 
     Parameters
@@ -156,6 +156,7 @@ def ch5_design_checks(checks_data, bridge) -> str:
         Provides input_dict, output_dict, and helper methods.
     """
     girder_entries = get_girder_entries(bridge.input_dict)
+    chart_paths = chart_paths or {}
     if not girder_entries:
         n = int(bridge.input_dict.get(KEY_TS_NO_OF_GIRDERS, 1))
         girder_entries = [(f"Girder {i}", f"M1") for i in range(1, n + 1)]
@@ -1531,7 +1532,7 @@ Cross bracing between adjacent plate girders provides lateral stability during c
 
 \vspace{0.4em}
 \noindent
-\setlength{\tabcolsep}{4pt}
+\ReportTableCompact
 \setlength\LTleft{0pt}
 \setlength\LTright{\fill}
 
@@ -1590,7 +1591,7 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 
 \vspace{0.4em}
 \noindent
-\setlength{\tabcolsep}{4pt}
+\ReportTableCompact
 \setlength{\LTleft}{0pt}
 \setlength{\LTright}{\fill}
 
@@ -1648,10 +1649,12 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 \begin{longtable}{|C{3.4cm}|L{4.5cm}|C{2.3cm}|C{2.3cm}|>{\centering\arraybackslash}p{1.6cm}|}
 \caption{\textbf{Overall Design Check Summary --- All Members}}
 \hline
+\ReportTableHeader
 \textbf{Member / Check} & \textbf{Governing Load Combo} & \textbf{Demand} & \textbf{Capacity} & \textbf{UR} \\[6pt]
 \hline
 \endfirsthead
 \hline
+\ReportTableHeader
 \textbf{Member / Check} & \textbf{Governing Load Combo} & \textbf{Demand} & \textbf{Capacity} & \textbf{UR} \\[6pt]
 \hline
 \endhead
@@ -1659,5 +1662,12 @@ End diaphragms at the supports transfer transverse loads to the bearings, restra
 \end{longtable}
 \noindent\textit{Note: UR = Demand / Capacity. All values $\leq 1.0$ indicate passing checks. The governing check for each component is highlighted in the individual design check sections above.}
 
+""" + ((r"""
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{""" + chart_paths["utilization_summary"] + r"""}
+\caption{Overall component utilization ratios; red dashed line marks UR = 1.0.}
+\end{figure}
+""") if chart_paths.get("utilization_summary") else "") + r"""
 """
 

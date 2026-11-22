@@ -124,7 +124,7 @@ def ch3_loads(input_dict):
             lanes_int = int(lanes)
             braking_force_t = IRC6_2017.cl_211_2_braking_force(lanes_int)
             braking_force_kN = braking_force_t * 9.81
-            braking_force_str = f"{braking_force_kN:.2f} kN ({braking_force_t:.2f} tonnes)"
+            braking_force_str = f"{braking_force_kN:.2f}"
         except Exception:
             braking_force_str = "N/A"
     else:
@@ -141,6 +141,9 @@ def ch3_loads(input_dict):
         fp_str = f"{fp_value} kN/m²"
     else:
         fp_str = "N/A"
+
+    fp_value_display = fp_str.split(" (IRC 6")[0].replace(" kN/m²", "")
+    fp_basis = "IRC 6 Cl. 206.1" if "IRC 6 Cl. 206.1" in fp_str else str(fp_mode or "User input")
 
     # Vz / Pz — prefer stored computed values; fall back to IRC6 Table 12
     vz_val = input_dict.get(KEY_WL_HOURLY_MEAN_WIND)
@@ -310,23 +313,44 @@ This section summarizes all loads applied to the bridge and the load combination
 \end{longtable}
 
 \vspace{1em}
-\begin{longtable}{|L{5.5cm}|p{10.0cm}|}
+\begin{longtable}{|L{5.5cm}|C{3.0cm}|p{7.0cm}|}
 \caption{\textbf{Live Loads (LL)}}
 \hline
-\textbf{parameter} & \textbf{value} \\
+\ReportTableHeader
+\textbf{Vehicle live load parameter} & \textbf{Value} & \textbf{Unit / basis} \\
 \hline
 \endfirsthead
 \hline
-\textbf{parameter} & \textbf{value} \\
+\ReportTableHeader
+\textbf{Vehicle live load parameter} & \textbf{Value} & \textbf{Unit / basis} \\
 \hline
 \endhead
-\textnormal{Vehicles Considered} & """ + _tex(vehicles_str) + r""" \\[6pt]
+\textnormal{Vehicles selected in Loading tab} & """ + _tex(vehicles_str) + r""" & IRC 6 \\
 \hline
-\textnormal{Impact Factor (IRC 6)} & """ + _tex(impact_factor_str) + r""" \\[6pt]
+\textnormal{Impact factor, $1+IF$} & """ + _tex(impact_factor_str) + r""" & Dimensionless \\
 \hline
-\textnormal{Braking Load (IRC 6)} & """ + _tex(braking_force_str) + r""" \\[6pt]
+\textnormal{Braking load} & """ + _tex(braking_force_str) + r""" & kN (IRC 6 Cl. 211.2) \\
 \hline
-\textnormal{Footpath Live Load (if applicable)} & """ + (_render_value(input_dict, KEY_LL_FOOTPATH_PRESSURE_VALUE, ' kN/m\\textsuperscript{2}')) + r""" \\[6pt]
+\textnormal{Centrifugal force} & Not available & kN; curve radius / speed not supplied \\
+\hline
+\end{longtable}
+
+\vspace{1em}
+\begin{longtable}{|L{5.5cm}|C{3.0cm}|p{7.0cm}|}
+\caption{\textbf{Footway Live Load}}
+\hline
+\ReportTableHeader
+\textbf{Parameter} & \textbf{Value} & \textbf{Unit / basis} \\
+\hline
+\endfirsthead
+\hline
+\ReportTableHeader
+\textbf{Parameter} & \textbf{Value} & \textbf{Unit / basis} \\
+\hline
+\endhead
+\textnormal{Footway pressure} & """ + _tex(fp_value_display or "N/A") + r""" & kN/m$^2$ \\
+\hline
+\textnormal{Footway load mode} & """ + _tex(fp_basis) + r""" & """ + _tex(fp_str) + r""" \\
 \hline
 \end{longtable}
 

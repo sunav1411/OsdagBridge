@@ -1,4 +1,5 @@
-def ch7_quantities(input_dict):
+def ch7_quantities(input_dict, chart_paths=None):
+    chart_paths = chart_paths or {}
     return r"""
 \chapter{Material Take-off \& Quantity Summary}
 \label{ch:material-takeoff}
@@ -6,13 +7,15 @@ def ch7_quantities(input_dict):
 \noindent\textbf{Table 7.1  Bill of Materials (Steel, Concrete, and Reinforcement Quantities)}
 
 \begingroup
-\setlength{\tabcolsep}{3.5pt}
+\ReportTableDense
 \begin{longtable}{|C{1.0cm}|L{3.8cm}|C{2.6cm}|C{1.8cm}|C{1.8cm}|C{1.8cm}|C{1.8cm}|}
 \hline
+\ReportTableHeader
 \textbf{S.N.} & \textbf{Item Description} & \textbf{Volume} & \textbf{Quantity} & \textbf{Total Volume} & \textbf{Weight (MT)} & \textbf{Total Weight (MT)} \\
 \hline
 \endfirsthead
 \hline
+\ReportTableHeader
 \textbf{S.N.} & \textbf{Item Description} & \textbf{Volume} & \textbf{Quantity} & \textbf{Total Volume} & \textbf{Weight (MT)} & \textbf{Total Weight (MT)} \\
 \hline
 \endhead
@@ -25,6 +28,8 @@ def ch7_quantities(input_dict):
 \hline
 2(c) & Cross Bracing - Diagonal Chord & """ + str(input_dict.get("bracing_diag_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_qty", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("bracing_diag_wt_total", "N.A.")) + r""" \\
 \hline
+2(d) & End Diaphragms & N.A. & N.A. & N.A. & N.A. & """ + str(input_dict.get("end_diaphragms_wt_total", "N.A.")) + r""" \\
+\hline
 3 & Concrete (M40) for Deck Slab & """ + str(input_dict.get("concrete_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("concrete_deck_wt_total", "N.A.")) + r""" \\
 \hline
 4 & Reinforcement Steel (Fe 500) & """ + str(input_dict.get("rebar_deck_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_qty", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("rebar_deck_wt_total", "N.A.")) + r""" \\
@@ -34,6 +39,20 @@ def ch7_quantities(input_dict):
 6 & Crash Barrier & """ + str(input_dict.get("crash_barrier_vol_formula", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_qty", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_vol_total", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_single", "N.A.")) + r""" & """ + str(input_dict.get("crash_barrier_wt_total", "N.A.")) + r""" \\
 \hline
 \end{longtable}
+
+""" + ((r"""
+\section*{Material Quantity Visual Summary}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.82\textwidth]{""" + chart_paths["steel_quantities"] + r"""}
+\caption*{Structural steel quantities by bridge component (MT).}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.82\textwidth]{""" + chart_paths["concrete_reinforcement"] + r"""}
+\caption*{Concrete volume and reinforcement steel weight.}
+\end{figure}
+""") if chart_paths.get("steel_quantities") and chart_paths.get("concrete_reinforcement") else "") + r"""
 """
 
 
