@@ -103,11 +103,6 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textbf{parameter} & \textbf{value} \\
 \hline
-\endfirsthead
-\hline
-\textbf{parameter} & \textbf{value} \\
-\hline
-\endhead
 \textnormal{Project Location} & """ + _tex(m.project_location) + r""" \\
 \hline
 \textnormal{Latitude / Longitude} & """ + (_render_value(input_dict,'latitude')) + ', ' + (_render_value(input_dict,'longitude')) + r""" \\
@@ -129,11 +124,6 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textbf{parameter} & \textbf{value} \\
 \hline
-\endfirsthead
-\hline
-\textbf{parameter} & \textbf{value} \\
-\hline
-\endhead
 \textnormal{Type of Structure} & """ + (_render_value(input_dict, KEY_STRUCTURE_TYPE)) + r""" \\
 \hline
 \textnormal{Span (m)} & """ + (_render_value(input_dict, KEY_SPAN, ' m')) + r""" \\
@@ -157,11 +147,6 @@ This section documents all inputs provided to OsdagBridge. User-provided inputs 
 \hline
 \textbf{parameter} & \textbf{value} \\
 \hline
-\endfirsthead
-\hline
-\textbf{parameter} & \textbf{value} \\
-\hline
-\endhead
 \textnormal{Girder Steel Grade (IS 2062)} & """ + (_render_value(input_dict, KEY_GIRDER)) + r""" \\
 \hline
 \textnormal{Cross Bracing Steel Grade} & """ + (_render_value(input_dict, KEY_CROSS_BRACING)) + r""" \\
