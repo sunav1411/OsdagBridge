@@ -1168,9 +1168,16 @@ This section presents all structural design checks performed by OsdagBridge. For
 \noindent\textit{Note: IRC 22 Cl. 603.3.3.1, IS 800 Cl. 8.2.2}
 
 \vspace{1em}
-\begin{longtable}{|C{2.5cm}|L{6.5cm}|>{\arraybackslash}p{6.5cm}|}
-\caption{\textbf{Stiffener Design Summary}}
+\begin{longtable}{|C{2.0cm}|L{5.5cm}|>{\arraybackslash}p{5.5cm}|}
+\caption{\textbf{Stiffener Design Summary}}\\
 \hline
+\textbf{Girder} & \textbf{Parameter} & \textbf{Value} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Girder} & \textbf{Parameter} & \textbf{Value} \\
+\hline
+\endhead
 """ + t57_content + r"""
 \end{longtable}
 """ + t58_block + r"""
@@ -1180,7 +1187,7 @@ This section presents all structural design checks performed by OsdagBridge. For
 
 \vspace{1em}
 
-\begin{longtable}{|C{2.5cm}|L{3.5cm}|C{3.5cm}|>{\centering\arraybackslash}p{4.2cm}|C{1.8cm}|}
+\begin{longtable}{|C{2.0cm}|L{3.0cm}|C{3.0cm}|>{\centering\arraybackslash}p{3.6cm}|C{1.5cm}|}
 \caption{\textbf{End Panel Stiffener Checks}}\\
 \hline
 \textbf{} & \textbf{Check} & \textbf{Required} & \textbf{Provided} & \textbf{Status} \\[6pt]
@@ -1312,8 +1319,15 @@ The reinforced concrete deck slab is designed per IRC~112:2011 (flexure, shear, 
 
 \vspace{1em}
 \begin{longtable}{|L{5.5cm}|p{10.0cm}|}
-\caption{\textbf{Deck Slab --- Loading and Geometry}}
+\caption{\textbf{Deck Slab --- Loading and Geometry}}\\
 \hline
+\textbf{Parameter} & \textbf{Value} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Parameter} & \textbf{Value} \\
+\hline
+\endhead
 \textnormal{Effective Span of Deck Slab, $l_{eff}$} & """ + _dkf(KEY_DD_SPAN, nd=0, scale=1000.0) + r""" mm (girder spacing, c/c) \\[6pt]
 \hline
 \textnormal{Deck Thickness, $t_s$} & """ + _render_value(bridge.input_dict, KEY_TS_DECK_THICKNESS) + r""" mm \\[6pt]
