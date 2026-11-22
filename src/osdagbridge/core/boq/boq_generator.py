@@ -4,6 +4,7 @@
 
 import logging
 import math
+import re
 from typing import Any
 
 from osdagbridge.core.utils.common import (
@@ -89,6 +90,7 @@ def calculate_material_quantities(inputs: dict, outputs: dict) -> dict:
         "crash_barrier_vol_total": "N.A.",
         "crash_barrier_wt_single": "N.A.",
         "crash_barrier_wt_total": "N.A.",
+        "end_diaphragms_wt_total": "N.A.",
     }
     try:
         span_val = inputs.get(KEY_SPAN)
@@ -359,6 +361,117 @@ def calculate_material_quantities(inputs: dict, outputs: dict) -> dict:
             quantities["crash_barrier_vol_total"] = "N.A."
             quantities["crash_barrier_wt_single"] = "N.A."
             quantities["crash_barrier_wt_total"] = "N.A."
+
+        # 7. End diaphragms: section mass (kg/m) is populated by the design
+        # pass. Each girder bay has a diaphragm at both bridge ends.
+        ed_masses = []
+        spacing = float(inputs.get(KEY_TS_GIRDER_SPACING) or 0)
+        girder_depth = 0.0
+        try:
+            girder_depth = float(resolve_girder_value(
+                inputs, "member_properties.girder_details.section_input.web_depth", 0
+            )) / 1000.0
+        except (TypeError, ValueError, KeyError):
+            pass
+        ed_prefixes = (
+            "transverse_member_design.ed.section_properties.end_diaphragm.M.",
+            "transverse_member_design.ed.section_properties.top_chord.M.",
+            "transverse_member_design.ed.section_properties.bottom_chord.M.",
+        )
+        pair_ids = set()
+        for key in outputs:
+            for prefix in ed_prefixes:
+                if key.startswith(prefix):
+                    pair_ids.add(key[len(prefix):])
+        for pair_id in pair_ids:
+            pair_number = int(re.search(r"\d+", pair_id).group()) if re.search(r"\d+", pair_id) else 1
+            input_suffix = f".{pair_id}.E{pair_number}M1"
+            diaphragm_type = str(
+                inputs.get("member_properties.end_diaphragm_details.type" + input_suffix)
+                or outputs.get("member_properties.end_diaphragm_details.type." + pair_id)
+                or ""
+            ).strip().lower()
+            for prefix in ed_prefixes:
+                raw_mass = outputs.get(prefix + pair_id)
+                try:
+                    mass_kg_m = float(raw_mass)
+                except (TypeError, ValueError):
+                    continue
+                if mass_kg_m <= 0:
+                    continue
+                if prefix == ed_prefixes[0]:
+                    if "cross" in diaphragm_type:
+                        brace_type = str(inputs.get(
+                            "member_properties.end_diaphragm_details.bracing_type" + input_suffix, "X"
+                        ))
+                        horizontal = spacing if brace_type in ("X", "X-Bracing") else spacing / 2
+                        member_length = math.hypot(horizontal, girder_depth * 0.85)
+                        count = 2 if brace_type in ("X", "X-Bracing") else 1
+                    elif "rolled" in diaphragm_type:
+                        member_length, count = spacing, 1
+                    else:
+                        continue
+                else:
+                    member_length = spacing
+                    count = 1
+                # kg/m × m × member count × two support ends → metric tonnes.
+                ed_masses.append(mass_kg_m * member_length * count * 2 / 1000.0)
+        # Section properties supplied in the UI are stored in the input
+        # dictionary, while derived transverse-member keys can be partial.
+        # Recompute the complete total from the selected sections so partial
+        # output keys cannot silently undercount the diaphragms.
+        mass_prefix = "member_properties.end_diaphragm_details.section_properties.mass."
+        type_prefix = "member_properties.end_diaphragm_details.type."
+        pair_configs = {}
+        for key, value in inputs.items():
+            if not key.startswith(type_prefix) or not key.endswith("M1"):
+                continue
+            match = re.match(r"(G\d+G\d+)\.E(\d+)M1$", key[len(type_prefix):])
+            if match:
+                pair_configs[match.group(1)] = (int(match.group(2)), value)
+
+        fallback_total = 0.0
+        for pair_id, (pair_number, raw_type) in pair_configs.items():
+            diaphragm_type = str(raw_type or "").strip().lower()
+            try:
+                mass_kg_m = float(inputs.get(
+                    f"{mass_prefix}{pair_id}.E{pair_number}M1"
+                ))
+            except (TypeError, ValueError):
+                continue
+            if mass_kg_m <= 0:
+                continue
+
+            pair_mass = 0.0
+            if "cross" in diaphragm_type:
+                brace_type = str(inputs.get(
+                    f"member_properties.end_diaphragm_details.bracing_type.{pair_id}.E{pair_number}M1",
+                    "X-Bracing",
+                )).strip().lower()
+                brace_count = 2 if brace_type.startswith("x") else 1
+                horizontal = spacing if brace_count == 2 else spacing / 2.0
+                diagonal_length = math.hypot(horizontal, girder_depth * 0.85)
+                pair_mass += mass_kg_m * diagonal_length * brace_count * 2 / 1000.0
+            elif "rolled" in diaphragm_type:
+                pair_mass += mass_kg_m * spacing * 2 / 1000.0
+
+            brace_designation = inputs.get(
+                f"member_properties.end_diaphragm_details.bracing_section_designation.{pair_id}.E{pair_number}M1"
+            )
+            for chord in ("top_chord", "bottom_chord"):
+                base = f"member_properties.end_diaphragm_details.{chord}"
+                enabled = str(inputs.get(f"{base}.{pair_id}.E{pair_number}M1", "No")).strip().lower()
+                designation = inputs.get(
+                    f"member_properties.end_diaphragm_details.{chord}_section_designation.{pair_id}.E{pair_number}M1"
+                )
+                if enabled in {"yes", "true", "1"} and designation == brace_designation:
+                    pair_mass += mass_kg_m * spacing * 2 / 1000.0
+            fallback_total += pair_mass
+
+        if fallback_total > 0:
+            quantities["end_diaphragms_wt_total"] = f"{fallback_total:.2f}"
+        elif ed_masses:
+            quantities["end_diaphragms_wt_total"] = f"{sum(ed_masses):.2f}"
 
     except Exception as exc:
         logger.warning(f"Error calculating material quantities: {exc}")

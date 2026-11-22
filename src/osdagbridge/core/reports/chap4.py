@@ -47,7 +47,15 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
     merged_body = ("\n\\hline\n").join(
         _merged_row(lc, lc_summary.get(lc), rxn_summary.get(lc))
         for lc in all_lcs
-    ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\[6pt]"
+    ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\\\[6pt]"
+
+    reaction_rows = []
+    for _lc, _rxn in rxn_summary.items():
+        _rxn = _rxn or {}
+        reaction_rows.append(_tex(_lc) + " & " + _fmt(_rxn.get("left_kN")) + " & " + _fmt(_rxn.get("right_kN")) + r" \\[6pt]")
+    reaction_body = ("\n\\hline\n").join(reaction_rows)
+    if not reaction_body:
+        reaction_body = r"\multicolumn{3}{|c|}{No support reaction data available} \\"
 
     _span_m         = float(bridge.input_dict.get(KEY_SPAN, 0) or 0)
     _allow_live_mm  = _span_m * 1000.0 / 800.0
@@ -83,8 +91,8 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \vspace{1em}
 \begingroup
 \footnotesize
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.25}
+\ReportTableNarrow
+\ReportCompactRows
 
 \begin{longtable}{|
 >{\centering\arraybackslash}p{3.1cm}|
@@ -141,17 +149,17 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \endgroup
 
 \vspace{1em}
-\begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
+\begin{longtable}{|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|>{\centering\arraybackslash}p{4.8cm}|}
 \caption{\textbf{Reactions at Supports}}
 \hline
-\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\[6pt]
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
 \hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
+\endfirsthead
 \hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
+\textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
 \hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
+\endhead
+""" + reaction_body + r"""
 \end{longtable}
 
 \vspace{1em}
@@ -159,6 +167,12 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \caption{\textbf{Deflection Summary (Live Load \& Total Load)}}
 \hline
 \textbf{parameter} & \textbf{value} \\
+\hline
+\endfirsthead
+\hline
+\textbf{parameter} & \textbf{value} \\
+\hline
+\endhead
 \hline
 \textnormal{Deflection due to Live Load, $\delta_{LL}$} & """ + _live_str + r""" \\[6pt]
 \hline

@@ -129,6 +129,8 @@ from .chap6 import ch6_drawings
 from .chap7 import ch7_quantities
 from .chap8 import ch8_design_log
 from .chap9 import references
+from .styles import latex_geometry_package, latex_preamble_settings
+from .report_charts import generate_report_charts
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +158,8 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \documentclass[12pt,a4paper]{report}
 
 % Packages
-\usepackage[a4paper, margin=1in]{geometry}
+""" + latex_geometry_package() + r"""
+\usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -166,7 +169,6 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \usepackage{float}
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
-\usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{enumitem}
 \usepackage{caption}
@@ -179,7 +181,6 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 }
 \usepackage{subcaption}
 \usepackage{multirow}
-\usepackage{colortbl}
 \usepackage{longtable}
 \setlength{\LTleft}{\fill}
 \setlength{\LTright}{\fill}
@@ -190,72 +191,42 @@ def preamble(project_name, job_number, report_date, report_version='Rev 0'):
 \usepackage{etoolbox}
 \usepackage{needspace}
 
+""" + latex_preamble_settings() + r"""
 \numberwithin{table}{chapter}
 \numberwithin{figure}{chapter}
 % Table layout and spacing: consistent padding, row height, and longtable pre/post skips
-\setlength{\tabcolsep}{6pt}
-\renewcommand{\arraystretch}{1.12}
-\setlength{\LTpre}{0pt}
-\setlength{\LTpost}{6pt}
-% Table rules (outline thickness) and small extra row height for clarity
-\setlength{\arrayrulewidth}{0.5pt}
-\setlength{\extrarowheight}{0.6pt}
-
-% Prevent tables from overflowing past the page bottom:
-% if fewer than 5 baseline-skips remain, break to the next page first.
-\BeforeBeginEnvironment{table}{\needspace{5\baselineskip}}
-\BeforeBeginEnvironment{longtable}{\needspace{5\baselineskip}}
-
-\definecolor{osdagGreen}{HTML}{91B014}
+% Shared report theme and page geometry are supplied by reports/styles.py.
 
 \fancypagestyle{main}{
   \fancyhf{}
   \fancyhead[L]{""" + pn + r""" $|$ """ + jn + r"""}
   \fancyhead[R]{""" + rd + r""" $|$ """ + rv + r"""}
-  \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
+  \fancyfoot[L]{\ifbool{hasSDonPage}{\shortstack[l]{\footnotesize\textit{* Software default value}\\Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}}{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}}
   \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
   \renewcommand{\headrule}{\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{2pt}}
-  \renewcommand{\footrule}{%
-    \ifbool{hasSDonPage}{%
-      \vspace{-20pt}%
-      \hbox to \headwidth{\textcolor{black}{\footnotesize\textit{* Software default value}}\hfil}%
-      \vspace{4pt}%
-    }{%
-      \vspace{-8pt}%
-    }%
-    \color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}%
-  }
+  \renewcommand{\footrule}{\ReportRule}
 }
 \fancypagestyle{plain}{
   \fancyhf{}
   \fancyhead[L]{""" + pn + r""" $|$ """ + jn + r"""}
   \fancyhead[R]{""" + rd + r""" $|$ """ + rv + r"""}
-  \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
+  \fancyfoot[L]{\ifbool{hasSDonPage}{\shortstack[l]{\footnotesize\textit{* Software default value}\\Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}}{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}}
   \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
   \renewcommand{\headrule}{\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{2pt}}
-  \renewcommand{\footrule}{%
-    \ifbool{hasSDonPage}{%
-      \vspace{-20pt}%
-      \hbox to \headwidth{\textcolor{black}{\footnotesize\textit{* Software default value}}\hfil}%
-      \vspace{4pt}%
-    }{%
-      \vspace{-8pt}%
-    }%
-    \color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}%
-  }
+  \renewcommand{\footrule}{\ReportRule}
 }
 \fancypagestyle{firstpage}{
   \fancyhf{}
   \renewcommand{\headrulewidth}{0pt}
   \fancyfoot[L]{Osdag $|$ FOSSEE $|$ Indian Institute of Technology Bombay}
   \fancyfoot[R]{Page \thepage\ of \pageref{LastPage}}
-  \renewcommand{\footrule}{\vspace{-8pt}\color{osdagGreen}\hrule width\headwidth height 1pt \vspace{6pt}}
+  \renewcommand{\footrule}{\ReportRule}
 }
 \pagestyle{main}
 \setstretch{1.15}
 
 % Custom Commands
-\newcommand{\placeholder}[1]{\textit{\textless #1\textgreater}}
+\newcommand{\placeholder}[1]{\parbox[t]{\linewidth}{\centering\textit{\textless #1\textgreater}}}
 \newcommand{\todo}[1]{\colorbox{yellow}{TODO: #1}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
@@ -901,11 +872,14 @@ def generate_report(payload, request):
 
             # ── Assemble LaTeX document (fig_paths now has tmp_dir paths) ──
             bridge = ReportDataBridge(payload.output_dict, payload.inputs, payload)
+            chart_paths = generate_report_charts(tmp_images, payload, bridge)
             span_m = float(payload.inputs.get(KEY_SPAN, 0) or 0)
 
             doc_parts = []
             doc_parts.append(preamble(payload.metadata.project_name, payload.metadata.job_number, payload.metadata.report_date, payload.metadata.subtitle or 'Rev 0'))
             doc_parts.append(title_page(payload.metadata, osdag_logo_latex, org_logo_latex))
+            # Continue page numbering after the title page.
+            doc_parts.append(r"\setcounter{page}{2}")
 
             if payload.options.include_toc:
                 doc_parts.append(toc_section())
@@ -924,11 +898,11 @@ def generate_report(payload, request):
             if 'analysis' in secs:
                 doc_parts.append(ch4_analysis(payload.analysis_summary, fig_paths, bridge, span_m))
             if 'design_checks' in secs:
-                doc_parts.append(ch5_design_checks(payload.design_checks, bridge))
+                doc_parts.append(ch5_design_checks(payload.design_checks, bridge, chart_paths))
             if 'drawings' in secs and payload.options.include_figures:
                 doc_parts.append(ch6_drawings(fig_paths))
 
-            doc_parts.append(ch7_quantities(payload.inputs))
+            doc_parts.append(ch7_quantities(payload.inputs, chart_paths))
 
             mode = str(payload.inputs.get(KEY_DESIGN_MODE, "Optimized")).strip().lower()
             is_custom = mode in {"custom", "customized"}
@@ -970,19 +944,30 @@ def generate_report(payload, request):
                         [compiler, '-interaction=nonstopmode', request.file_stem + '.tex'],
                         **kwargs
                     )
+                    if res.returncode != 0:
+                        logger.warning(
+                            "pdflatex exited with code %d (pass %d). Output tail:\n%s",
+                            res.returncode,
+                            _ + 1,
+                            res.stdout.decode('utf-8', 'ignore')[-6000:],
+                        )
                 except Exception as exc:
                     logger.warning(f"pdflatex run failed: {exc}")
 
             if os.path.exists(tmp_tex):
                 shutil.copy2(tmp_tex, tex_path)
-            if os.path.exists(tmp_pdf):
+            pdf_was_compiled = os.path.isfile(tmp_pdf)
+            if pdf_was_compiled:
                 shutil.copy2(tmp_pdf, pdf_path)
 
-        if os.path.exists(pdf_path):
+        # Do not treat a pre-existing output file as the result of this run.
+        # If compilation failed, returning that stale path could make callers
+        # report success while leaving the older PDF untouched.
+        if pdf_was_compiled and os.path.exists(pdf_path):
             logger.info("Report generated: %s", pdf_path)
             return ReportResult(pdf_path=pdf_path, tex_path=tex_path)
 
-        logger.error("pdflatex ran but no PDF was produced.")
+        logger.error("pdflatex ran but no PDF was produced by this report run.")
         if 'res' in locals():
             logger.error("pdflatex STDOUT:\n%s", res.stdout.decode('utf-8', 'ignore'))
             logger.error("pdflatex STDERR:\n%s", res.stderr.decode('utf-8', 'ignore'))
