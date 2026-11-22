@@ -61,17 +61,40 @@ def _design_utilizations(payload, bridge):
                 cross_bracing.append(bridge.get_cb_efficiency(pair, member, force_type))
 
     end_diaphragm = []
-    def collect_efficiencies(obj):
-        if isinstance(obj, dict):
-            for key, value in obj.items():
-                if str(key).lower() in {"ur", "dcr", "efficiency", "ratio"}:
-                    end_diaphragm.append(value)
-                else:
-                    collect_efficiencies(value)
-        elif isinstance(obj, list):
-            for value in obj:
-                collect_efficiencies(value)
-    collect_efficiencies(outputs.get("end_diaphragm_design_results", {}) or {})
+    # End-diaphragm results are saved as raw Osdag result dictionaries. Use
+    # the same adapter as the detailed report table to normalize their
+    # efficiency values instead of assuming a particular nested key name.
+    try:
+        from osdagbridge.core.bridge_types.plate_girder.results_data import _extract_osdag_summary
+
+        results = outputs.get("end_diaphragm_design_results", {}) or {}
+        if isinstance(results, dict):
+            for members in results.values():
+                if not isinstance(members, dict):
+                    continue
+                for force_types in members.values():
+                    if not isinstance(force_types, dict):
+                        continue
+                    for raw in force_types.values():
+                        try:
+                            end_diaphragm.append(_extract_osdag_summary(raw or {}).get("efficiency"))
+                        except (TypeError, ValueError, AttributeError):
+                            continue
+    except (ImportError, AttributeError):
+        logger.warning("Could not normalize end-diaphragm report results for utilization chart")
+
+    if _max_numeric(end_diaphragm) is None:
+        # Chapter 5 reports cross-braced end diaphragms using the governing
+        # cross-bracing tension/compression checks. Keep the summary chart
+        # consistent with those displayed checks when a separate ED result
+        # efficiency is not present in the payload.
+        ed_types = [
+            str(value).strip().lower()
+            for key, value in (payload.inputs or {}).items()
+            if str(key).startswith("member_properties.end_diaphragm_details.type") and value
+        ]
+        if any("brac" in value for value in ed_types):
+            end_diaphragm = cross_bracing[:]
 
     return {
         "Steel Plate Girders": _max_numeric(steel),

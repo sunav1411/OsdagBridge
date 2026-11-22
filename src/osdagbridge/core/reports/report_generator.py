@@ -944,19 +944,30 @@ def generate_report(payload, request):
                         [compiler, '-interaction=nonstopmode', request.file_stem + '.tex'],
                         **kwargs
                     )
+                    if res.returncode != 0:
+                        logger.warning(
+                            "pdflatex exited with code %d (pass %d). Output tail:\n%s",
+                            res.returncode,
+                            _ + 1,
+                            res.stdout.decode('utf-8', 'ignore')[-6000:],
+                        )
                 except Exception as exc:
                     logger.warning(f"pdflatex run failed: {exc}")
 
             if os.path.exists(tmp_tex):
                 shutil.copy2(tmp_tex, tex_path)
-            if os.path.exists(tmp_pdf):
+            pdf_was_compiled = os.path.isfile(tmp_pdf)
+            if pdf_was_compiled:
                 shutil.copy2(tmp_pdf, pdf_path)
 
-        if os.path.exists(pdf_path):
+        # Do not treat a pre-existing output file as the result of this run.
+        # If compilation failed, returning that stale path could make callers
+        # report success while leaving the older PDF untouched.
+        if pdf_was_compiled and os.path.exists(pdf_path):
             logger.info("Report generated: %s", pdf_path)
             return ReportResult(pdf_path=pdf_path, tex_path=tex_path)
 
-        logger.error("pdflatex ran but no PDF was produced.")
+        logger.error("pdflatex ran but no PDF was produced by this report run.")
         if 'res' in locals():
             logger.error("pdflatex STDOUT:\n%s", res.stdout.decode('utf-8', 'ignore'))
             logger.error("pdflatex STDERR:\n%s", res.stderr.decode('utf-8', 'ignore'))
