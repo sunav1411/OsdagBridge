@@ -907,7 +907,8 @@ def generate_report(payload, request):
             doc_parts = []
             doc_parts.append(preamble(payload.metadata.project_name, payload.metadata.job_number, payload.metadata.report_date, payload.metadata.subtitle or 'Rev 0'))
             doc_parts.append(title_page(payload.metadata, osdag_logo_latex, org_logo_latex))
-            # Continue page numbering after the title page.\n            doc_parts.append(r"\\setcounter{page}{2}")
+            # Continue page numbering after the title page.
+            doc_parts.append(r"\setcounter{page}{2}")
 
             if payload.options.include_toc:
                 doc_parts.append(toc_section())
