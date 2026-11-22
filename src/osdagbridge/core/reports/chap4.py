@@ -47,7 +47,15 @@ def ch4_analysis(asum, fig_paths, bridge: "ReportDataBridge", span_m: float):
     merged_body = ("\n\\hline\n").join(
         _merged_row(lc, lc_summary.get(lc), rxn_summary.get(lc))
         for lc in all_lcs
-    ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\[6pt]"
+    ) if all_lcs else r"--- & --- & --- & --- & --- & --- & --- & --- & --- \\\\[6pt]"
+
+    reaction_rows = []
+    for _lc, _rxn in rxn_summary.items():
+        _rxn = _rxn or {}
+        reaction_rows.append(_tex(_lc) + " & " + _fmt(_rxn.get("left_kN")) + " & " + _fmt(_rxn.get("right_kN")) + r" \\\\[6pt]")
+    reaction_body = ("\n\\hline\n").join(reaction_rows)
+    if not reaction_body:
+        reaction_body = r"\\multicolumn{3}{|c|}{No support reaction data available} \\\\"
 
     _span_m         = float(bridge.input_dict.get(KEY_SPAN, 0) or 0)
     _allow_live_mm  = _span_m * 1000.0 / 800.0
@@ -142,6 +150,7 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 
 \vspace{1em}
 \begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
+\begin{longtable}{|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|>{\centering\arraybackslash}p{5.2cm}|}
 \caption{\textbf{Reactions at Supports}}
 \hline
 \textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
@@ -150,14 +159,8 @@ A grillage model was used for structural analysis. The deck is idealized as a gr
 \hline
 \textbf{Load Case} & \textbf{Left Support (kN)} & \textbf{Right Support (kN)} \\
 \hline
-\endhead[6pt]
-\hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
- & """ + '' + r""" & """ + '' + r""" \\[6pt]
-\hline
+\endhead
+''' + reaction_body + r'''
 \end{longtable}
 
 \vspace{1em}
